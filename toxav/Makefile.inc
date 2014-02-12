@@ -1,29 +1,32 @@
 if BUILD_AV
 
-lib_LTLIBRARIES += libtoxrtp.la \
-                   libtoxmsi.la \
-                   libtoxmedia.la
+lib_LTLIBRARIES += librtp.la \
+                   libmsi.la \
+                   libmedia.la \
+                   libtoxav.la
 
+#Someone needs to fix this makefile
+VPX_LIBS = -lvpx
                    
 # ****** RTP ****** #
                    
-libtoxrtp_la_include_HEADERS = \
-                        ../toxav/toxrtp.h
+librtp_la_include_HEADERS = \
+                        ../toxavrtp.h
 
-libtoxrtp_la_includedir = $(includedir)/tox
+librtp_la_includedir = $(includedir)/tox
 
-libtoxrtp_la_SOURCES =  ../toxav/toxrtp.h \
-                        ../toxav/toxrtp.c 
+librtp_la_SOURCES =  ../toxav/rtp.h \
+                        ../toxav/rtp.c 
 
-libtoxrtp_la_CFLAGS = -I../toxcore \
+librtp_la_CFLAGS = -I../toxcore \
                        -I../toxav \
                        $(NACL_CFLAGS)
 
-libtoxrtp_la_LDFLAGS = $(TOXRTP_LT_LDFLAGS) \
+librtp_la_LDFLAGS = $(TOXRTP_LT_LDFLAGS) \
                        $(NACL_LDFLAGS) \
                        $(EXTRA_LT_LDFLAGS)
 
-libtoxrtp_la_LIBS =    libtoxcore.la \
+librtp_la_LIBS =    libtoxcore.la \
                        $(NACL_LIBS)
                         
                         
@@ -32,23 +35,23 @@ libtoxrtp_la_LIBS =    libtoxcore.la \
                         
 # ****** MSI ****** #
 
-libtoxmsi_la_include_HEADERS = \
-                        ../toxav/toxmsi.h
+libmsi_la_include_HEADERS = \
+                        ../toxav/msi.h
 
-libtoxmsi_la_includedir = $(includedir)/tox
+libmsi_la_includedir = $(includedir)/tox
 
-libtoxmsi_la_SOURCES =  ../toxav/toxmsi.h \
-                        ../toxav/toxmsi.c 
+libmsi_la_SOURCES =  ../toxav/msi.h \
+                        ../toxav/msi.c 
 
-libtoxmsi_la_CFLAGS = -I../toxcore \
+libmsi_la_CFLAGS = -I../toxcore \
                        -I../toxav \
                        $(NACL_CFLAGS) 
 
-libtoxmsi_la_LDFLAGS = $(TOXMSI_LT_LDFLAGS) \
+libmsi_la_LDFLAGS = $(TOXMSI_LT_LDFLAGS) \
                        $(EXTRA_LT_LDFLAGS) \
                        $(NACL_LDFLAGS) 
 
-libtoxmsi_la_LIBS =    libtoxcore.la \
+libmsi_la_LIBS =    libtoxcore.la \
                        $(NACL_LIBS)
                         
                         
@@ -57,47 +60,64 @@ libtoxmsi_la_LIBS =    libtoxcore.la \
                         
 # ****** MEDIA ****** #
 
-libtoxmedia_la_include_HEADERS = \
-                        ../toxav/toxmedia.h
+libmedia_la_include_HEADERS = \
+                        ../toxav/media.h
 
-libtoxmedia_la_includedir = $(includedir)/tox
+libmedia_la_includedir = $(includedir)/tox
 
-libtoxmedia_la_SOURCES =  ../toxav/toxmedia.h \
-                          ../toxav/toxmedia.c 
+libmedia_la_SOURCES =  ../toxav/media.h \
+                          ../toxav/media.c 
 
-libtoxmedia_la_CFLAGS =   -I../toxcore \
+libmedia_la_CFLAGS =   -I../toxcore \
                           -I../toxav \
-                          $(AVFORMAT_CFLAGS) \
-                          $(AVCODEC_CFLAGS) \
-                          $(AVUTIL_CFLAGS) \
-                          $(AVDEVICE_CFLAGS) \
-                          $(SWSCALE_CFLAGS) \
-                          $(SDL_CFLAGS) \
-                          $(OPENAL_CFLAGS) \
                           $(NACL_CFLAGS) \
                           $(OPUS_CFLAGS) 
 
                           
-libtoxmedia_la_LDFLAGS =  $(TOXMSI_LT_LDFLAGS) \
+libmedia_la_LDFLAGS =  $(TOXMSI_LT_LDFLAGS) \
                           $(TOXRTP_LT_LDFLAGS) \
                           $(EXTRA_LT_LDFLAGS) \
                           $(NACL_LDFLAGS) 
                           
                           
-libtoxmedia_la_LIBS =     libtoxcore.la \
+libmedia_la_LIBS =     libtoxcore.la \
                           $(NACL_LDFLAGS) \
-                          $(AVFORMAT_LIBS) \
-                          $(AVCODEC_LIBS) \
-                          $(AVUTIL_LIBS) \
-                          $(AVDEVICE_LIBS) \
-                          $(SWSCALE_LIBS) \
-                          $(SDL_LIBS) \
-                          $(OPENAL_LIBS) \
                           $(NACL_LIBS) \
-                          $(OPUS_LIBS)
+                          $(OPUS_LIBS) \
+                          $(VPX_LIBS)
+                          
+                          
+# ****** TOXAV ****** #
+
+libtoxav_la_include_HEADERS = \
+                        ../toxav/toxav.h
+
+libtoxav_la_includedir = $(includedir)/tox
+
+libtoxav_la_SOURCES =  ../toxav/toxav.h \
+                          ../toxav/toxav.c 
+
+libtoxav_la_CFLAGS =   -I../toxcore \
+                          -I../toxav \
+                          $(NACL_CFLAGS) \
+                          $(OPUS_CFLAGS) 
+
+                          
+libtoxav_la_LDFLAGS =  $(TOXMSI_LT_LDFLAGS) \
+                          $(TOXRTP_LT_LDFLAGS) \
+                          $(EXTRA_LT_LDFLAGS) \
+                          $(NACL_LDFLAGS) 
+                          
+                          
+libtoxav_la_LIBS =     libtoxcore.la \
+                          $(NACL_LDFLAGS) \
+                          $(NACL_LIBS) \
+                          $(OPUS_LIBS) \
+                          $(VPX_LIBS)
                           
                           
                           
+                                
                           
 # ***** PHONE ***** #
                           
@@ -118,9 +138,10 @@ phone_CFLAGS = -I../toxcore \
                 $(OPUS_CFLAGS) 
 
 
-phone_LDADD =   libtoxrtp.la \
-                libtoxmsi.la \
-                libtoxmedia.la  \
+phone_LDADD =   librtp.la \
+                libmsi.la \
+                libmedia.la  \
+                libtoxav.la  \
                 libtoxcore.la \
                 $(NACL_LDFLAGS) \
                 $(AVFORMAT_LIBS) \
@@ -131,7 +152,8 @@ phone_LDADD =   libtoxrtp.la \
                 $(SDL_LIBS) \
                 $(OPENAL_LIBS) \
                 $(NACL_LIBS) \
-                $(OPUS_LIBS)
+                $(OPUS_LIBS) \
+                $(VPX_LIBS)
                 
                 
 endif

@@ -30,10 +30,6 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "../toxcore/util.h"
-#include "../toxcore/network.h"
-#include "../toxcore/net_crypto.h"
-#include "../toxcore/Messenger.h"
 
 #define PAYLOAD_ID_VALUE_OPUS 1
 #define PAYLOAD_ID_VALUE_VP8  2
@@ -551,7 +547,7 @@ int rtp_handle_packet ( void* object, IP_Port ip_port, uint8_t* data, uint32_t l
     /* Hopefully this goes well 
      * NOTE: Is this even used?
      */
-    memcpy(&_msg->from, &ip_port, sizeof(tox_IP_Port));
+    memcpy(&_msg->from, &ip_port, sizeof(IP_Port));
     
     /* Check if message came in late */
     if ( check_late_message(_session, _msg) < 0 ) { /* Not late */
@@ -727,7 +723,7 @@ RTPMessage* rtp_recv_msg ( RTPSession* session )
  * @retval -1 On error.
  * @retval 0 On success.
  */
-int rtp_send_msg ( RTPSession* session, Tox* messenger, const uint8_t* data, uint16_t length )
+int rtp_send_msg ( RTPSession* session, Messenger* messenger, const uint8_t* data, uint16_t length )
 {
     RTPMessage* msg = rtp_new_message (session, data, length);
     
@@ -743,8 +739,8 @@ int rtp_send_msg ( RTPSession* session, Tox* messenger, const uint8_t* data, uin
     increase_nonce ( _calculated, msg->header->sequnum );
     
     /* Need to skip 2 bytes that are for sequnum */
-    int encrypted_length = encrypt_data_symmetric(
-        (uint8_t*) session->encrypt_key, _calculated, msg->data + 2, msg->length - 2, _send_data + 3 );
+    int encrypted_length = encrypt_data_symmetric( /* TODO: msg->length - 2 (fix this properly)*/
+        (uint8_t*) session->encrypt_key, _calculated, msg->data + 2, msg->length, _send_data + 3 );
     
     int full_length = encrypted_length + 3;
     
@@ -752,7 +748,7 @@ int rtp_send_msg ( RTPSession* session, Tox* messenger, const uint8_t* data, uin
     _send_data[2] = msg->data[1];
     
     
-    if ( full_length != sendpacket ( ((Messenger*)messenger)->net, *((IP_Port*) &session->dest), _send_data, full_length) ) {
+    if ( full_length != sendpacket ( messenger->net, *((IP_Port*) &session->dest), _send_data, full_length) ) {
         printf("Rtp error: %s\n", strerror(errno));
         return -1;
     }
@@ -816,7 +812,7 @@ void rtp_free_msg ( RTPSession* session, RTPMessage* msg )
  * @retval NULL Error occurred.
  */
 RTPSession* rtp_init_session ( int            payload_type, 
-                               Tox*           messenger, 
+                               Messenger*     messenger, 
                                int            friend_num, 
                                const uint8_t* encrypt_key, 
                                const uint8_t* decrypt_key, 
@@ -824,9 +820,7 @@ RTPSession* rtp_init_session ( int            payload_type,
                                const uint8_t* decrypt_nonce 
 )
 {    
-    Messenger* _messenger_casted = (Messenger*) messenger;
-    
-    IP_Port _dest = get_friend_ipport(_messenger_casted, friend_num );
+    IP_Port _dest = get_friend_ipport(messenger, friend_num );
     
     /* This should be enough eh? */
     if ( _dest.port == 0) {
@@ -836,7 +830,7 @@ RTPSession* rtp_init_session ( int            payload_type,
     RTPSession* _retu = calloc(1, sizeof(RTPSession));
     assert(_retu);
     
-    networking_registerhandler(_messenger_casted->net, payload_type, rtp_handle_packet, _retu);
+    networking_registerhandler(messenger->net, payload_type, rtp_handle_packet, _retu);
     
     _retu->version = RTP_VERSION;   /* It's always 2 */
     _retu->padding = 0;             /* If some additional data is needed about the packet */
@@ -847,7 +841,7 @@ RTPSession* rtp_init_session ( int            payload_type,
     _retu->marker    = 0;
     _retu->payload_type = payload_table[payload_type];        
     
-    _retu->dest = *((tox_IP_Port*)&_dest);
+    _retu->dest = *((IP_Port*)&_dest);
     
     _retu->rsequnum = _retu->sequnum = 1;
     
@@ -894,12 +888,12 @@ RTPSession* rtp_init_session ( int            payload_type,
  * @retval -1 Error occurred.
  * @retval 0 Success.
  */
-int rtp_terminate_session ( RTPSession* session, Tox* messenger )
+int rtp_terminate_session ( RTPSession* session, Messenger* messenger )
 {
     if ( !session )
         return -1;
     
-    networking_registerhandler(((Messenger*)messenger)->net, session->prefix, NULL, NULL);
+    networking_registerhandler(messenger->net, session->prefix, NULL, NULL);
     
     free ( session->ext_header );
     free ( session->csrc );

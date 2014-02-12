@@ -593,7 +593,7 @@ int send_message ( MSISession* session, MSIMessage* msg, uint32_t to )
     uint8_t _msg_string_final [MSI_MAXMSG_SIZE];
     uint16_t _length = message_to_string ( msg, _msg_string_final );
     
-    return m_msi_packet((struct Messenger*) session->messenger_handle, to, _msg_string_final, _length) ? 0 : -1;
+    return m_msi_packet(session->messenger_handle, to, _msg_string_final, _length) ? 0 : -1;
 }
 
 
@@ -1136,7 +1136,7 @@ void msi_register_callback ( MSICallback callback, MSICallbackID id )
  * @return MSISession* The created session.
  * @retval NULL Error occured.
  */
-MSISession* msi_init_session ( Tox* messenger, const uint8_t* ua_name ) {
+MSISession* msi_init_session ( Messenger* messenger, const uint8_t* ua_name ) {
     assert ( messenger );
     
     MSISession* _retu = calloc ( sizeof ( MSISession ), 1 );
